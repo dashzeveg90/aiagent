@@ -1,9 +1,9 @@
-import Chatbot from "@/components/Chatbot";
+import LandingPage from "./landing";
 
 export default function Home() {
   return (
-    <main className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-white">
-      <Chatbot />
+    <main className="">
+      <LandingPage />
     </main>
   );
 }

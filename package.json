@@ -9,9 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.1.1",
     "@pinecone-database/pinecone": "^7.1.0",
     "@supabase/auth-helpers-nextjs": "^0.15.0",
     "@supabase/supabase-js": "^2.100.1",
+    "antd": "^6.3.5",
     "formidable": "^3.5.4",
     "next": "16.1.6",
     "openai": "^6.32.0",
