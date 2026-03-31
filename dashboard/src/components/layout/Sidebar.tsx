@@ -14,6 +14,7 @@ export default function Sidebar() {
         ]
       : [
           { name: "Хянах самбар", href: "/dashboard" },
+          { name: "Мэдлэгийн сан нэмэх", href: "/dashboard/knowledge-base" },
           { name: "Тохиргоо", href: "/dashboard/settings" },
         ];
 

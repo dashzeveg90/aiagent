@@ -1,5 +1,6 @@
-const formidable = require("formidable");
+const { formidable } = require("formidable");
 const mammoth = require("mammoth");
+const os = require("os");
 const pdfParse = require("pdf-parse");
 const { Pinecone } = require("@pinecone-database/pinecone");
 const OpenAI = require("openai");
@@ -11,7 +12,7 @@ const index = pinecone.Index(process.env.PINECONE_INDEX);
 
 const parseForm = (req) =>
   new Promise((resolve, reject) => {
-    const form = formidable({ uploadDir: "/tmp", keepExtensions: true });
+    const form = formidable({ uploadDir: os.tmpdir(), keepExtensions: true });
     form.parse(req, (error, fields, files) => {
       if (error) reject(error);
       else resolve({ fields, files });
