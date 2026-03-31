@@ -20,7 +20,9 @@ export default function LoginPage() {
     try {
       const user = await login(email, password);
       router.push(
-        hasActiveSubscription(user.company) ? "/dashboard" : "/dashboard/billing",
+        user.role === "superadmin" || hasActiveSubscription(user.company)
+          ? "/dashboard"
+          : "/dashboard/billing",
       );
     } catch (submissionError) {
       setError(

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/router";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Sidebar from "@/components/layout/Sidebar";
 import { useAuth } from "@/lib/auth";
@@ -68,6 +69,7 @@ function formatDate(value?: string | null) {
 }
 
 export default function BillingPage() {
+  const router = useRouter();
   const { user, refreshUser } = useAuth();
   const [payload, setPayload] = useState<BillingPayload | null>(null);
   const [selectedPackageId, setSelectedPackageId] = useState("");
@@ -111,6 +113,12 @@ export default function BillingPage() {
     },
     [selectedPackageId],
   );
+
+  useEffect(() => {
+    if (user?.role === "superadmin") {
+      router.replace("/dashboard");
+    }
+  }, [router, user?.role]);
 
   useEffect(() => {
     loadBilling(true);
@@ -196,6 +204,16 @@ export default function BillingPage() {
       );
     }
   };
+
+  if (user?.role === "superadmin") {
+    return (
+      <ProtectedRoute allowExpiredSubscription>
+        <div className="min-h-screen flex items-center justify-center text-slate-500">
+          Түр хүлээнэ үү...
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute allowExpiredSubscription>
