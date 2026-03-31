@@ -25,6 +25,8 @@ dist
 .DS_Store
 *.pem
 backend/uploads/
+backend/.mongodb-data/
+backend/mongodb.log
 
 # debug
 npm-debug.log*
