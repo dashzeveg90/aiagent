@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   getDashboardStats,
   getCompanies,
+  getPublicCompanyBySlug,
   getCompanyById,
   updateCompanyStatus,
   getCurrentCompany,
@@ -26,6 +27,7 @@ router.get(
 );
 
 router.get("/companies", authenticateToken, checkRole("superadmin"), getCompanies);
+router.get("/companies/slug/:slug", getPublicCompanyBySlug);
 router.get(
   "/companies/:id",
   authenticateToken,

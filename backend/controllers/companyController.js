@@ -194,6 +194,59 @@ exports.getCompanies = async (req, res) => {
   }
 };
 
+exports.getPublicCompanyBySlug = async (req, res) => {
+  try {
+    const companyDoc = await Organization.findOne({
+      slug: String(req.params.slug || "").trim().toLowerCase(),
+    }).populate("currentPackage");
+
+    if (!companyDoc) {
+      return res.status(404).json({
+        status: "error",
+        message: "Company олдсонгүй",
+      });
+    }
+
+    await syncOrganizationSubscription(companyDoc);
+    const subscription = buildSubscriptionSummary(companyDoc);
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        company: {
+          _id: companyDoc._id,
+          id: companyDoc._id,
+          name: companyDoc.name,
+          slug: companyDoc.slug,
+          status: companyDoc.status,
+          brandColor: companyDoc.brandColor,
+          logoUrl: companyDoc.logoUrl,
+          subscriptionStatus: companyDoc.subscriptionStatus,
+          subscription,
+          currentPackage: companyDoc.currentPackage
+            ? {
+                _id: companyDoc.currentPackage._id,
+                id: companyDoc.currentPackage._id,
+                name: companyDoc.currentPackage.name,
+                code: companyDoc.currentPackage.code,
+                price: companyDoc.currentPackage.price,
+                currency: companyDoc.currentPackage.currency,
+                durationDays: companyDoc.currentPackage.durationDays,
+                billingCycle: companyDoc.currentPackage.billingCycle,
+              }
+            : null,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Get public company by slug error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Company мэдээлэл авахад алдаа гарлаа",
+    });
+  }
+};
+
 exports.getCompanyById = async (req, res) => {
   try {
     const company = await Organization.findById(req.params.id)

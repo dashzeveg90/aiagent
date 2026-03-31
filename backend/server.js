@@ -43,6 +43,7 @@ app.get("/", (req, res) => {
       auth: "/api/auth",
       dashboard: "/api/dashboard",
       companies: "/api/companies",
+      companyBySlug: "/api/companies/slug/:slug",
       company: "/api/company/current",
       packages: "/api/packages",
       billing: "/api/billing/current",
