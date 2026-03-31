@@ -32,7 +32,9 @@ function getStatusTone(status: string) {
 
 export default function CompaniesPage() {
   const { user } = useAuth();
-  const [companies, setCompanies] = useState<Array<Record<string, unknown>>>([]);
+  const [companies, setCompanies] = useState<Array<Record<string, unknown>>>(
+    [],
+  );
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -41,7 +43,9 @@ export default function CompaniesPage() {
         const response = await apiService.companies.getAll();
         setCompanies(response.data);
       } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : "Алдаа гарлаа");
+        setError(
+          loadError instanceof Error ? loadError.message : "Алдаа гарлаа",
+        );
       }
     };
 
@@ -56,7 +60,9 @@ export default function CompaniesPage() {
         <Sidebar />
         <main className="flex-1 p-6 md:p-8">
           <h1 className="text-3xl font-bold text-slate-900">Company list</h1>
-          <p className="mt-2 text-slate-500">Зөвхөн superadmin энэ хэсгийг харна.</p>
+          <p className="mt-2 text-slate-500">
+            Зөвхөн superadmin энэ хэсгийг харна.
+          </p>
 
           {error ? (
             <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -82,22 +88,28 @@ export default function CompaniesPage() {
                 >
                   <div className="grid gap-4 md:grid-cols-[1.4fr_1fr_1fr_1fr_180px] md:items-center">
                     <div>
-                      <p className="font-medium text-slate-900">{String(company.name)}</p>
-                      <p className="mt-1 text-sm text-slate-500">/{String(company.slug)}</p>
+                      <p className="font-medium text-slate-900">
+                        {String(company.name)}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        /{String(company.slug)}
+                      </p>
                     </div>
 
                     <div>
                       <span
                         className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${getStatusTone(
                           String(
-                            (company.subscription as Record<string, unknown>)?.status ||
+                            (company.subscription as Record<string, unknown>)
+                              ?.status ||
                               company.subscriptionStatus ||
                               "",
                           ),
                         )}`}
                       >
                         {String(
-                          (company.subscription as Record<string, unknown>)?.status ||
+                          (company.subscription as Record<string, unknown>)
+                            ?.status ||
                             company.subscriptionStatus ||
                             "-",
                         )}
@@ -105,7 +117,12 @@ export default function CompaniesPage() {
                       <p className="mt-2 text-sm text-slate-500">
                         Last paid:{" "}
                         {formatDate(
-                          (company.renewalHistorySummary as Record<string, unknown>)?.lastPaidAt,
+                          (
+                            company.renewalHistorySummary as Record<
+                              string,
+                              unknown
+                            >
+                          )?.lastPaidAt,
                         )}
                       </p>
                     </div>
@@ -113,7 +130,8 @@ export default function CompaniesPage() {
                     <div>
                       <p className="text-sm font-medium text-slate-900">
                         {String(
-                          (company.currentPackage as Record<string, unknown>)?.name || "-",
+                          (company.currentPackage as Record<string, unknown>)
+                            ?.name || "-",
                         )}
                       </p>
                       <p className="mt-1 text-sm text-slate-500">
@@ -125,22 +143,34 @@ export default function CompaniesPage() {
                       <p className="text-sm text-slate-900">
                         Paid renewals:{" "}
                         {String(
-                          (company.renewalHistorySummary as Record<string, unknown>)
-                            ?.paidRenewals || 0,
+                          (
+                            company.renewalHistorySummary as Record<
+                              string,
+                              unknown
+                            >
+                          )?.paidRenewals || 0,
                         )}
                       </p>
                       <p className="mt-1 text-sm text-slate-500">
                         Last tx:{" "}
                         {String(
-                          (company.renewalHistorySummary as Record<string, unknown>)
-                            ?.lastTransactionStatus || "-",
+                          (
+                            company.renewalHistorySummary as Record<
+                              string,
+                              unknown
+                            >
+                          )?.lastTransactionStatus || "-",
                         )}
                       </p>
                       <p className="mt-1 text-sm text-slate-500">
                         Extended to:{" "}
                         {formatDate(
-                          (company.renewalHistorySummary as Record<string, unknown>)
-                            ?.lastActivatedEndsAt,
+                          (
+                            company.renewalHistorySummary as Record<
+                              string,
+                              unknown
+                            >
+                          )?.lastActivatedEndsAt,
                         )}
                       </p>
                     </div>

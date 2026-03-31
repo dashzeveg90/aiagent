@@ -4,6 +4,8 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Sidebar from "@/components/layout/Sidebar";
 import { useAuth } from "@/lib/auth";
 import apiService from "@/lib/api";
+import FloatingChat from "@/components/chat/FloatingChat";
+import WidgetRoot from "@/components/chat/WidgetRoot";
 
 type DashboardPayload = {
   stats: Record<string, number>;
@@ -18,7 +20,10 @@ export default function DashboardPage() {
   const [payload, setPayload] = useState<DashboardPayload | null>(null);
   const [error, setError] = useState("");
   const company = (payload?.company || {}) as Record<string, unknown>;
-  const currentPackage = (company.currentPackage || {}) as Record<string, unknown>;
+  const currentPackage = (company.currentPackage || {}) as Record<
+    string,
+    unknown
+  >;
 
   useEffect(() => {
     const load = async () => {
@@ -26,7 +31,9 @@ export default function DashboardPage() {
         const response = await apiService.dashboard.getHome();
         setPayload(response.data);
       } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : "Алдаа гарлаа");
+        setError(
+          loadError instanceof Error ? loadError.message : "Алдаа гарлаа",
+        );
       }
     };
 
@@ -44,7 +51,13 @@ export default function DashboardPage() {
               ? "Platform superadmin хянах самбар"
               : `${user?.company?.name || "Company"} admin самбар`}
           </p>
-
+          <WidgetRoot
+            slug={String(company.slug || "")}
+            mode={"floating"}
+            subtitle={"Онлайн"}
+            greeting={"Сайн байна уу! Та надаас юу асуухыг хүсч байна вэ?"}
+            position={"right"}
+          />
           {error ? (
             <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}
@@ -58,7 +71,9 @@ export default function DashboardPage() {
                 className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
               >
                 <p className="text-sm text-slate-500">{key}</p>
-                <p className="mt-2 text-3xl font-semibold text-slate-900">{value}</p>
+                <p className="mt-2 text-3xl font-semibold text-slate-900">
+                  {value}
+                </p>
               </div>
             ))}
           </div>
@@ -76,7 +91,9 @@ export default function DashboardPage() {
                     className="flex items-center justify-between px-5 py-4 hover:bg-slate-50"
                   >
                     <div>
-                      <p className="font-medium text-slate-900">{String(company.name)}</p>
+                      <p className="font-medium text-slate-900">
+                        {String(company.name)}
+                      </p>
                       <p className="mt-1 text-sm text-slate-500">
                         /{String(company.slug)}
                       </p>
@@ -130,7 +147,9 @@ export default function DashboardPage() {
                 <p className="mt-3 text-sm text-slate-500">
                   Ends at:{" "}
                   {company.subscriptionEndsAt
-                    ? new Date(String(company.subscriptionEndsAt)).toLocaleString()
+                    ? new Date(
+                        String(company.subscriptionEndsAt),
+                      ).toLocaleString()
                     : "-"}
                 </p>
                 <Link
