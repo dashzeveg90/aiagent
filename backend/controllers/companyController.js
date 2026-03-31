@@ -4,7 +4,17 @@ const os = require("os");
 const pdfParse = require("pdf-parse");
 const { Pinecone } = require("@pinecone-database/pinecone");
 const OpenAI = require("openai");
-const { Organization, Document, MessageLog, User } = require("../models");
+const {
+  Organization,
+  Document,
+  MessageLog,
+  PaymentTransaction,
+  User,
+} = require("../models");
+const {
+  buildSubscriptionSummary,
+  syncOrganizationSubscription,
+} = require("../services/subscriptionService");
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
@@ -50,6 +60,7 @@ exports.getDashboardStats = async (req, res) => {
       ]);
 
       const recentCompanies = await Organization.find()
+        .populate("currentPackage")
         .sort({ createdAt: -1 })
         .limit(20)
         .lean();
@@ -67,7 +78,9 @@ exports.getDashboardStats = async (req, res) => {
       });
     }
 
-    const company = await Organization.findById(req.user.company).lean();
+    const company = await Organization.findById(req.company._id)
+      .populate("currentPackage")
+      .lean();
     const [documents, messages] = await Promise.all([
       Document.find({ org: company._id }).sort({ createdAt: -1 }).lean(),
       MessageLog.find({ org: company._id }).sort({ createdAt: -1 }).limit(5).lean(),
@@ -96,10 +109,81 @@ exports.getDashboardStats = async (req, res) => {
 
 exports.getCompanies = async (req, res) => {
   try {
-    const companies = await Organization.find().sort({ createdAt: -1 }).lean();
+    const companies = await Organization.find()
+      .populate("currentPackage")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const companyIds = companies.map((company) => company._id);
+    const paymentSummaries = await PaymentTransaction.aggregate([
+      {
+        $match: {
+          org: { $in: companyIds },
+        },
+      },
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+      {
+        $group: {
+          _id: "$org",
+          totalTransactions: { $sum: 1 },
+          paidRenewals: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "paid"] }, 1, 0],
+            },
+          },
+          lastTransactionStatus: { $first: "$status" },
+          lastTransactionCreatedAt: { $first: "$createdAt" },
+          lastPaidAt: {
+            $max: {
+              $cond: [{ $eq: ["$status", "paid"] }, "$paidAt", null],
+            },
+          },
+          lastActivatedEndsAt: {
+            $max: {
+              $cond: [{ $eq: ["$status", "paid"] }, "$activatedEndsAt", null],
+            },
+          },
+        },
+      },
+    ]);
+
+    const paymentSummaryMap = new Map(
+      paymentSummaries.map((summary) => [String(summary._id), summary]),
+    );
+
     res.status(200).json({
       status: "success",
-      data: companies,
+      data: companies.map((company) => {
+        const paymentSummary = paymentSummaryMap.get(String(company._id));
+
+        return {
+          ...company,
+          subscription: buildSubscriptionSummary(company),
+          renewalHistorySummary: paymentSummary
+            ? {
+                totalTransactions: paymentSummary.totalTransactions || 0,
+                paidRenewals: paymentSummary.paidRenewals || 0,
+                lastTransactionStatus: paymentSummary.lastTransactionStatus || null,
+                lastTransactionCreatedAt:
+                  paymentSummary.lastTransactionCreatedAt || null,
+                lastPaidAt: paymentSummary.lastPaidAt || null,
+                lastActivatedEndsAt:
+                  paymentSummary.lastActivatedEndsAt || null,
+              }
+            : {
+                totalTransactions: 0,
+                paidRenewals: 0,
+                lastTransactionStatus: null,
+                lastTransactionCreatedAt: null,
+                lastPaidAt: null,
+                lastActivatedEndsAt: null,
+              },
+        };
+      }),
     });
   } catch (error) {
     console.error("Get companies error:", error);
@@ -112,7 +196,9 @@ exports.getCompanies = async (req, res) => {
 
 exports.getCompanyById = async (req, res) => {
   try {
-    const company = await Organization.findById(req.params.id).lean();
+    const company = await Organization.findById(req.params.id)
+      .populate("currentPackage")
+      .lean();
     if (!company) {
       return res.status(404).json({
         status: "error",
@@ -120,9 +206,14 @@ exports.getCompanyById = async (req, res) => {
       });
     }
 
-    const [owner, documents] = await Promise.all([
+    const [owner, documents, transactions] = await Promise.all([
       User.findById(company.owner).lean(),
       Document.find({ org: company._id }).sort({ createdAt: -1 }).lean(),
+      PaymentTransaction.find({ org: company._id })
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .populate("package")
+        .lean(),
     ]);
 
     res.status(200).json({
@@ -131,6 +222,8 @@ exports.getCompanyById = async (req, res) => {
         company,
         owner,
         documents,
+        transactions,
+        subscription: buildSubscriptionSummary(company),
       },
     });
   } catch (error) {
@@ -181,7 +274,9 @@ exports.updateCompanyStatus = async (req, res) => {
 
 exports.getCurrentCompany = async (req, res) => {
   try {
-    const company = await Organization.findById(req.user.company).lean();
+    const companyDoc = await Organization.findById(req.company._id).populate("currentPackage");
+    await syncOrganizationSubscription(companyDoc);
+    const company = companyDoc.toObject();
     const [documents, messages] = await Promise.all([
       Document.find({ org: company._id }).sort({ createdAt: -1 }).lean(),
       MessageLog.find({ org: company._id }).sort({ createdAt: -1 }).limit(5).lean(),
@@ -193,6 +288,7 @@ exports.getCurrentCompany = async (req, res) => {
         company,
         documents,
         messages,
+        subscription: buildSubscriptionSummary(companyDoc),
       },
     });
   } catch (error) {

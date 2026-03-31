@@ -9,6 +9,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const companyRoutes = require("./routes/companyRoutes");
 const chatRoutes = require("./routes/chatRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
@@ -30,6 +31,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api/auth", authRoutes);
 app.use("/api", companyRoutes);
+app.use("/api", paymentRoutes);
 app.use("/api/chat", chatRoutes);
 
 app.get("/", (req, res) => {
@@ -42,6 +44,9 @@ app.get("/", (req, res) => {
       dashboard: "/api/dashboard",
       companies: "/api/companies",
       company: "/api/company/current",
+      packages: "/api/packages",
+      billing: "/api/billing/current",
+      qpayCallback: "/api/payments/qpay/callback",
       chat: "/api/chat/:slug",
     },
   });

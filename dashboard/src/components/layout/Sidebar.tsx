@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useAuth } from "@/lib/auth";
+import { getSubscriptionLabel, hasActiveSubscription } from "@/lib/subscription";
 
 export default function Sidebar() {
   const router = useRouter();
@@ -11,9 +12,11 @@ export default function Sidebar() {
       ? [
           { name: "Хянах самбар", href: "/dashboard" },
           { name: "Company list", href: "/dashboard/companies" },
+          { name: "Packages", href: "/dashboard/packages" },
         ]
       : [
           { name: "Хянах самбар", href: "/dashboard" },
+          { name: "Billing", href: "/dashboard/billing" },
           { name: "Мэдлэгийн сан нэмэх", href: "/dashboard/knowledge-base" },
           { name: "Тохиргоо", href: "/dashboard/settings" },
         ];
@@ -44,6 +47,17 @@ export default function Sidebar() {
                 <p className="text-xs text-gray-400 truncate">
                   {user?.role === "superadmin" ? "Superadmin" : user?.company?.name}
                 </p>
+                {user?.role === "company_admin" ? (
+                  <p
+                    className={`mt-1 text-[11px] ${
+                      hasActiveSubscription(user.company)
+                        ? "text-emerald-400"
+                        : "text-amber-300"
+                    }`}
+                  >
+                    {getSubscriptionLabel(user.company)}
+                  </p>
+                ) : null}
               </div>
             </div>
           </div>

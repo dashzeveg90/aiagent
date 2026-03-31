@@ -1,5 +1,9 @@
 const jwt = require("jsonwebtoken");
 const { User, Organization } = require("../models");
+const {
+  getSubscriptionAccessState,
+  syncOrganizationSubscription,
+} = require("../services/subscriptionService");
 
 exports.authenticateToken = async (req, res, next) => {
   try {
@@ -99,9 +103,11 @@ exports.requireCompanyAccess = async (req, res, next) => {
       return res.status(403).json({
         status: "error",
         message: "Таны company түр хаагдсан байна",
+        code: "COMPANY_SUSPENDED",
       });
     }
 
+    await syncOrganizationSubscription(company);
     req.company = company;
     next();
   } catch (error) {
@@ -109,6 +115,50 @@ exports.requireCompanyAccess = async (req, res, next) => {
     res.status(500).json({
       status: "error",
       message: "Company эрх шалгахад алдаа гарлаа",
+    });
+  }
+};
+
+exports.requireActiveSubscription = async (req, res, next) => {
+  try {
+    if (req.user.role === "superadmin") {
+      return next();
+    }
+
+    const company = req.company || (await Organization.findById(req.user.company?._id));
+    if (!company) {
+      return res.status(404).json({
+        status: "error",
+        message: "Company олдсонгүй",
+        code: "COMPANY_NOT_FOUND",
+      });
+    }
+
+    await syncOrganizationSubscription(company);
+    const access = getSubscriptionAccessState(company);
+
+    if (!access.isActive) {
+      return res.status(403).json({
+        status: "error",
+        message: access.message,
+        code: access.code,
+        data: {
+          subscription: {
+            status: access.status,
+            endsAt: company.subscriptionEndsAt || null,
+          },
+        },
+      });
+    }
+
+    req.company = company;
+    next();
+  } catch (error) {
+    console.error("Active subscription check error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Subscription шалгахад алдаа гарлаа",
+      code: "SUBSCRIPTION_CHECK_FAILED",
     });
   }
 };

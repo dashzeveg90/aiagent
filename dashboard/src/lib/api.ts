@@ -1,5 +1,19 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5005/api";
 
+export class ApiError extends Error {
+  status: number;
+  code?: string;
+  data?: unknown;
+
+  constructor(message: string, status: number, code?: string, data?: unknown) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+    this.data = data;
+  }
+}
+
 function getToken() {
   if (typeof window === "undefined") {
     return null;
@@ -22,7 +36,12 @@ async function request(path: string, init?: RequestInit) {
   const payload = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(payload?.message || "Алдаа гарлаа");
+    throw new ApiError(
+      payload?.message || "Алдаа гарлаа",
+      response.status,
+      payload?.code,
+      payload?.data,
+    );
   }
 
   return payload;
@@ -62,6 +81,28 @@ const apiService = {
         method: "PATCH",
         body: JSON.stringify({ status }),
       }),
+  },
+  packages: {
+    getAll: () => request("/packages"),
+    create: (data: Record<string, unknown>) =>
+      request("/packages", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: Record<string, unknown>) =>
+      request(`/packages/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+  },
+  billing: {
+    getCurrent: () => request("/billing/current"),
+    createInvoice: (packageId: string) =>
+      request("/billing/invoices", {
+        method: "POST",
+        body: JSON.stringify({ packageId }),
+      }),
+    getTransaction: (id: string) => request(`/billing/transactions/${id}`),
   },
   company: {
     getCurrent: () => request("/company/current"),

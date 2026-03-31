@@ -14,9 +14,16 @@ const {
   authenticateToken,
   checkRole,
   requireCompanyAccess,
+  requireActiveSubscription,
 } = require("../middleware/auth");
 
-router.get("/dashboard", authenticateToken, getDashboardStats);
+router.get(
+  "/dashboard",
+  authenticateToken,
+  requireCompanyAccess,
+  requireActiveSubscription,
+  getDashboardStats,
+);
 
 router.get("/companies", authenticateToken, checkRole("superadmin"), getCompanies);
 router.get(
@@ -32,23 +39,32 @@ router.patch(
   updateCompanyStatus,
 );
 
-router.get("/company/current", authenticateToken, requireCompanyAccess, getCurrentCompany);
+router.get(
+  "/company/current",
+  authenticateToken,
+  requireCompanyAccess,
+  requireActiveSubscription,
+  getCurrentCompany,
+);
 router.put(
   "/company/current",
   authenticateToken,
   requireCompanyAccess,
+  requireActiveSubscription,
   updateCurrentCompany,
 );
 router.post(
   "/company/current/documents",
   authenticateToken,
   requireCompanyAccess,
+  requireActiveSubscription,
   uploadDocument,
 );
 router.delete(
   "/company/current/documents/:id",
   authenticateToken,
   requireCompanyAccess,
+  requireActiveSubscription,
   deleteDocument,
 );
 

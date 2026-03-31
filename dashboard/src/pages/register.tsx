@@ -2,6 +2,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useAuth } from "@/lib/auth";
+import { hasActiveSubscription } from "@/lib/subscription";
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -21,8 +22,10 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      await register(formData);
-      router.push("/dashboard");
+      const user = await register(formData);
+      router.push(
+        hasActiveSubscription(user.company) ? "/dashboard" : "/dashboard/billing",
+      );
     } catch (submissionError) {
       setError(
         submissionError instanceof Error
@@ -45,7 +48,8 @@ export default function RegisterPage() {
             Company бүртгүүлэх
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Company admin account болон tenant company-г нэг дор үүсгэнэ.
+            Company admin account болон tenant company-г нэг дор үүсгээд дараа нь
+            Billing дээрээс QPay төлбөрөө хийнэ.
           </p>
         </div>
 

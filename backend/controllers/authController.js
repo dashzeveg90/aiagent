@@ -1,5 +1,9 @@
 const crypto = require("crypto");
 const { User, Organization } = require("../models");
+const {
+  buildSubscriptionSummary,
+  syncOrganizationSubscription,
+} = require("../services/subscriptionService");
 
 const slugify = (value) =>
   String(value || "")
@@ -7,6 +11,41 @@ const slugify = (value) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+
+const serializeCompany = (company) => {
+  if (!company) {
+    return null;
+  }
+
+  return {
+    _id: company._id,
+    id: company._id,
+    name: company.name,
+    slug: company.slug,
+    status: company.status,
+    plan: company.plan,
+    brandColor: company.brandColor,
+    logoUrl: company.logoUrl,
+    systemPrompt: company.systemPrompt,
+    subscriptionStatus: company.subscriptionStatus,
+    subscriptionStartsAt: company.subscriptionStartsAt || null,
+    subscriptionEndsAt: company.subscriptionEndsAt || null,
+    lastPaymentAt: company.lastPaymentAt || null,
+    currentPackage: company.currentPackage
+      ? {
+          _id: company.currentPackage._id || company.currentPackage,
+          id: company.currentPackage._id || company.currentPackage,
+          name: company.currentPackage.name || "",
+          code: company.currentPackage.code || company.plan,
+          price: company.currentPackage.price ?? null,
+          currency: company.currentPackage.currency || "MNT",
+          durationDays: company.currentPackage.durationDays ?? null,
+          billingCycle: company.currentPackage.billingCycle || "monthly",
+        }
+      : null,
+    subscription: buildSubscriptionSummary(company),
+  };
+};
 
 exports.register = async (req, res) => {
   try {
@@ -43,6 +82,7 @@ exports.register = async (req, res) => {
       owner: user._id,
       plan: "trial",
       status: "active",
+      subscriptionStatus: "pending",
       pineconeNamespace: `org-${slug}`,
       verifyToken: crypto.randomBytes(8).toString("hex"),
     });
@@ -61,12 +101,7 @@ exports.register = async (req, res) => {
           name: user.name,
           email: user.email,
           role: user.role,
-          company: {
-            id: company._id,
-            name: company.name,
-            slug: company.slug,
-            status: company.status,
-          },
+          company: serializeCompany(company),
         },
         token,
       },
@@ -92,7 +127,12 @@ exports.login = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email }).select("+password").populate("company");
+    const user = await User.findOne({ email })
+      .select("+password")
+      .populate({
+        path: "company",
+        populate: { path: "currentPackage" },
+      });
 
     if (!user) {
       return res.status(401).json({
@@ -120,7 +160,12 @@ exports.login = async (req, res) => {
       return res.status(403).json({
         status: "error",
         message: "Таны company идэвхгүй байна",
+        code: "COMPANY_SUSPENDED",
       });
+    }
+
+    if (user.company) {
+      await syncOrganizationSubscription(user.company);
     }
 
     user.lastLogin = new Date();
@@ -137,14 +182,7 @@ exports.login = async (req, res) => {
           name: user.name,
           email: user.email,
           role: user.role,
-          company: user.company
-            ? {
-                id: user.company._id,
-                name: user.company.name,
-                slug: user.company.slug,
-                status: user.company.status,
-              }
-            : null,
+          company: serializeCompany(user.company),
         },
         token,
       },
@@ -161,7 +199,14 @@ exports.login = async (req, res) => {
 
 exports.getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate("company");
+    const user = await User.findById(req.user.id).populate({
+      path: "company",
+      populate: { path: "currentPackage" },
+    });
+
+    if (user?.company) {
+      await syncOrganizationSubscription(user.company);
+    }
 
     res.status(200).json({
       status: "success",
@@ -171,7 +216,7 @@ exports.getMe = async (req, res) => {
         email: user.email,
         role: user.role,
         isActive: user.isActive,
-        company: user.company,
+        company: serializeCompany(user.company),
       },
     });
   } catch (error) {

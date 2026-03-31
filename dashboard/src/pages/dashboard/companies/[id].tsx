@@ -4,6 +4,32 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Sidebar from "@/components/layout/Sidebar";
 import apiService from "@/lib/api";
 
+function formatDate(value: unknown) {
+  if (!value) {
+    return "-";
+  }
+
+  return new Date(String(value)).toLocaleString();
+}
+
+function getTone(status: string) {
+  switch (status) {
+    case "paid":
+    case "active":
+      return "bg-emerald-100 text-emerald-700";
+    case "pending":
+      return "bg-blue-100 text-blue-700";
+    case "expired":
+      return "bg-amber-100 text-amber-700";
+    case "failed":
+    case "cancelled":
+    case "suspended":
+      return "bg-rose-100 text-rose-700";
+    default:
+      return "bg-slate-100 text-slate-600";
+  }
+}
+
 export default function CompanyDetailPage() {
   const router = useRouter();
   const { id } = router.query;
@@ -47,6 +73,9 @@ export default function CompanyDetailPage() {
   const company = (payload?.company || {}) as Record<string, unknown>;
   const owner = (payload?.owner || {}) as Record<string, unknown>;
   const documents = ((payload?.documents as Array<Record<string, unknown>>) || []);
+  const transactions =
+    ((payload?.transactions as Array<Record<string, unknown>>) || []);
+  const subscription = (payload?.subscription || {}) as Record<string, unknown>;
 
   return (
     <ProtectedRoute>
@@ -74,6 +103,18 @@ export default function CompanyDetailPage() {
                 Plan: {String(company.plan || "")}
               </p>
               <p className="mt-2 text-sm text-slate-500">
+                Subscription status: {String(subscription.status || company.subscriptionStatus || "")}
+              </p>
+              <p className="mt-2 text-sm text-slate-500">
+                Package: {String((company.currentPackage as Record<string, unknown>)?.name || "-")}
+              </p>
+              <p className="mt-2 text-sm text-slate-500">
+                Ends at:{" "}
+                {company.subscriptionEndsAt
+                  ? new Date(String(company.subscriptionEndsAt)).toLocaleString()
+                  : "-"}
+              </p>
+              <p className="mt-2 text-sm text-slate-500">
                 Namespace: {String(company.pineconeNamespace || "")}
               </p>
               <p className="mt-2 text-sm text-slate-500">
@@ -96,6 +137,51 @@ export default function CompanyDetailPage() {
                       </p>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <h3 className="font-semibold text-slate-900">Renewal history</h3>
+                <div className="mt-4 space-y-3">
+                  {transactions.map((tx) => (
+                    <div
+                      key={String(tx._id)}
+                      className="rounded-xl border border-slate-200 px-4 py-3"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-medium text-slate-900">
+                          {String((tx.package as Record<string, unknown>)?.name || "Package")}
+                        </p>
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${getTone(
+                            String(tx.status || ""),
+                          )}`}
+                        >
+                          {String(tx.status || "")}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {String(tx.amount || "")} {String(tx.currency || "")}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Invoice ID: {String(tx.invoiceId || "-")}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Paid at: {formatDate(tx.paidAt)}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Renewed until: {formatDate(tx.activatedEndsAt)}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Created at: {formatDate(tx.createdAt)}
+                      </p>
+                    </div>
+                  ))}
+                  {!transactions.length ? (
+                    <p className="text-sm text-slate-500">
+                      Одоогоор subscription renewal/payment түүх алга байна.
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </div>

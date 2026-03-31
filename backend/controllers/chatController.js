@@ -1,6 +1,10 @@
 const OpenAI = require("openai");
 const { Pinecone } = require("@pinecone-database/pinecone");
 const { Organization, MessageLog } = require("../models");
+const {
+  getSubscriptionAccessState,
+  syncOrganizationSubscription,
+} = require("../services/subscriptionService");
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
@@ -50,6 +54,16 @@ exports.publicChat = async (req, res) => {
       return res.status(404).json({
         status: "error",
         message: "Company assistant олдсонгүй",
+      });
+    }
+
+    await syncOrganizationSubscription(company);
+    const access = getSubscriptionAccessState(company);
+    if (!access.isActive) {
+      return res.status(403).json({
+        status: "error",
+        message: access.message,
+        code: access.code,
       });
     }
 

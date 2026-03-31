@@ -24,10 +24,37 @@ const OrganizationSchema = new mongoose.Schema(
       type: String,
       default: "trial",
     },
+    currentPackage: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "SubscriptionPackage",
+      default: null,
+    },
     status: {
       type: String,
       enum: ["active", "suspended"],
       default: "active",
+    },
+    subscriptionStatus: {
+      type: String,
+      enum: ["pending", "active", "expired", "cancelled"],
+      default: "pending",
+    },
+    subscriptionStartsAt: {
+      type: Date,
+      default: null,
+    },
+    subscriptionEndsAt: {
+      type: Date,
+      default: null,
+    },
+    lastPaymentAt: {
+      type: Date,
+      default: null,
+    },
+    lastPaymentTransaction: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PaymentTransaction",
+      default: null,
     },
     brandColor: {
       type: String,

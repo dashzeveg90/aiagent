@@ -17,6 +17,8 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [payload, setPayload] = useState<DashboardPayload | null>(null);
   const [error, setError] = useState("");
+  const company = (payload?.company || {}) as Record<string, unknown>;
+  const currentPackage = (company.currentPackage || {}) as Record<string, unknown>;
 
   useEffect(() => {
     const load = async () => {
@@ -114,16 +116,34 @@ export default function DashboardPage() {
               <div className="rounded-2xl border border-slate-200 bg-white p-5">
                 <h2 className="font-semibold text-slate-900">Company info</h2>
                 <p className="mt-4 text-sm text-slate-500">
-                  Public slug: /chat/{String(payload?.company?.slug || "")}
+                  Public slug: /chat/{String(company.slug || "")}
                 </p>
                 <p className="mt-3 text-sm text-slate-500">
-                  Verify token: {String(payload?.company?.verifyToken || "-")}
+                  Verify token: {String(company.verifyToken || "-")}
+                </p>
+                <p className="mt-3 text-sm text-slate-500">
+                  Subscription: {String(company.subscriptionStatus || "-")}
+                </p>
+                <p className="mt-3 text-sm text-slate-500">
+                  Package: {String(currentPackage.name || "-")}
+                </p>
+                <p className="mt-3 text-sm text-slate-500">
+                  Ends at:{" "}
+                  {company.subscriptionEndsAt
+                    ? new Date(String(company.subscriptionEndsAt)).toLocaleString()
+                    : "-"}
                 </p>
                 <Link
                   href="/dashboard/settings"
                   className="mt-5 inline-block text-sm font-medium text-blue-600"
                 >
                   Тохиргоо руу орох
+                </Link>
+                <Link
+                  href="/dashboard/billing"
+                  className="mt-3 block text-sm font-medium text-blue-600"
+                >
+                  Billing харах
                 </Link>
               </div>
             </div>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useAuth } from "@/lib/auth";
+import { hasActiveSubscription } from "@/lib/subscription";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -17,8 +18,10 @@ export default function LoginPage() {
     setError("");
 
     try {
-      await login(email, password);
-      router.push("/dashboard");
+      const user = await login(email, password);
+      router.push(
+        hasActiveSubscription(user.company) ? "/dashboard" : "/dashboard/billing",
+      );
     } catch (submissionError) {
       setError(
         submissionError instanceof Error
