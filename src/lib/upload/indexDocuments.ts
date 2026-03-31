@@ -22,6 +22,13 @@ export async function indexUploadDocuments({
     documents.map((document) => document.pageContent),
   );
 
+  console.log("1");
+
   await rootStore.addVectors(vectors, documents, { ids });
+  console.log("2");
+  
   await namespacedStore.addVectors(vectors, documents, { ids });
+
+  console.log("2");
+
 }

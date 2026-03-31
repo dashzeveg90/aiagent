@@ -51,11 +51,11 @@ export default async function handler(
     return res.status(400).json({ error: "Сүүлийн мессеж хэрэглэгчээс байх ёстой" });
   }
 
-  const organization = await getAuthenticatedChatOrganization(req, res);
+  // const organization = await getAuthenticatedChatOrganization(req, res);
 
-  if (!organization) {
-    return res.status(401).json({ error: "Нэвтэрч орсны дараа чат ашиглана уу" });
-  }
+  // if (!organization) {
+  //   return res.status(401).json({ error: "Нэвтэрч орсны дараа чат ашиглана уу" });
+  // }
 
   // Streaming тохируулна
   res.setHeader("Content-Type", "text/event-stream");
@@ -70,8 +70,10 @@ export default async function handler(
         res.write(`data: ${JSON.stringify({ text })}\n\n`);
       },
       {
-        namespace: organization.pinecone_namespace,
-        orgInstruction: organization.system_prompt,
+        // namespace: organization.pinecone_namespace,
+        // orgInstruction: organization.system_prompt,
+        namespace: "sendmn",
+        orgInstruction: "Ai туслах",
       },
     );
   } catch (error) {

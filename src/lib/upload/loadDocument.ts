@@ -1,8 +1,9 @@
 import path from "node:path";
+import { readFile } from "node:fs/promises";
 
 import { Document } from "@langchain/core/documents";
-import { DocxLoader } from "@langchain/community/document_loaders/fs/docx";
-import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
+import mammoth from "mammoth";
+import { PDFParse } from "pdf-parse";
 
 const SUPPORTED_EXTENSIONS = new Set([".docx", ".pdf"]);
 
@@ -19,13 +20,19 @@ export async function loadUploadDocument(
   filename: string,
 ): Promise<Document[]> {
   const extension = getExtension(filename);
+  const fileBuffer = await readFile(filePath);
 
-  const loader =
+  const text =
     extension === ".pdf"
-      ? new PDFLoader(filePath, { splitPages: false })
-      : new DocxLoader(filePath, { type: "docx" });
+      ? await extractPdfText(fileBuffer)
+      : (await mammoth.extractRawText({ buffer: fileBuffer })).value;
 
-  const documents = await loader.load();
+  const documents = [
+    new Document({
+      pageContent: text.trim(),
+      metadata: { source: filename },
+    }),
+  ];
 
   return documents
     .map(
@@ -39,4 +46,15 @@ export async function loadUploadDocument(
         }),
     )
     .filter((document) => document.pageContent.length > 0);
+}
+
+async function extractPdfText(fileBuffer: Buffer) {
+  const parser = new PDFParse({ data: fileBuffer });
+
+  try {
+    const result = await parser.getText();
+    return result.text;
+  } finally {
+    await parser.destroy();
+  }
 }

@@ -60,15 +60,20 @@ export default async function handler(
     const ids = buildUploadChunkIds(filename, chunks.length);
     await indexUploadDocuments({ documents: chunks, ids, namespace });
 
-    const { error } = await supabaseAdmin.from("documents").insert({
-      org_id: orgId,
-      filename,
-      chunk_count: chunks.length,
-    });
 
-    if (error) {
-      throw error;
-    }
+    // console.log("before supa");
+    // const { error } = await supabaseAdmin.from("documents").insert({
+    //   org_id: orgId,
+    //   filename,
+    //   chunk_count: chunks.length,
+    // });
+
+    // console.log("after supa"); 
+
+
+    // if (error) {
+    //   throw error;
+    // }
 
     return res.status(200).json({ ok: true });
   } catch (error) {
