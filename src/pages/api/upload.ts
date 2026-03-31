@@ -1,66 +1,82 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { promises as fs } from "node:fs";
+import os from "node:os";
 import formidable from "formidable";
 import { supabaseAdmin } from "@/lib/supabase";
-import { OpenAI } from "openai";
-import { Pinecone } from "@pinecone-database/pinecone";
+import {
+  buildUploadChunkIds,
+  indexUploadDocuments,
+} from "@/lib/upload/indexDocuments";
+import {
+  isSupportedUpload,
+  loadUploadDocument,
+} from "@/lib/upload/loadDocument";
+import { splitUploadDocuments } from "@/lib/upload/splitDocuments";
 
 export const config = { api: { bodyParser: false } };
-
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-  const form = formidable({ uploadDir: "/tmp", keepExtensions: true });
-  const [fields, files] = await form.parse(req);
-
-  const orgId = fields.orgId?.[0];
-  const namespace = fields.namespace?.[0];
-  const file = files.file?.[0];
-  if (!file || !orgId || !namespace) return res.status(400).end();
-
-  // Файл уншина (docx эсвэл pdf)
-  const { execSync } = require("child_process");
-  const text = execSync(`python3 -c "
-import sys
-from docx import Document
-doc = Document('${file.filepath}')
-print(' '.join([p.text for p in doc.paragraphs]))
-"`).toString();
-
-  // Chunk болгоно
-  const chunkSize = 800;
-  const chunks: string[] = [];
-  for (let i = 0; i < text.length; i += chunkSize) {
-    chunks.push(text.slice(i, i + chunkSize));
+  if (req.method !== "POST") {
+    return res.status(405).end();
   }
 
-  // Pinecone-д хадгална
-  const index = pc.Index(process.env.PINECONE_INDEX!);
-  const batchSize = 50;
-  for (let i = 0; i < chunks.length; i += batchSize) {
-    const batch = chunks.slice(i, i + batchSize);
-    const embedRes = await client.embeddings.create({
-      input: batch,
-      model: "text-embedding-3-large",
-    });
-    await index.namespace(namespace).upsert({
-      records: batch.map((text, j) => ({
-        id: `${file.originalFilename}-${i + j}`,
-        values: embedRes.data[j].embedding,
-        metadata: { text, source: file.originalFilename! },
-      })),
-    });
-  }
-
-  // Supabase-д бүртгэнэ
-  await supabaseAdmin.from("documents").insert({
-    org_id: orgId,
-    filename: file.originalFilename,
-    chunk_count: chunks.length,
+  const form = formidable({
+    uploadDir: os.tmpdir(),
+    keepExtensions: true,
   });
 
-  res.status(200).json({ ok: true });
+  let tempFilePath: string | undefined;
+
+  try {
+    const [fields, files] = await form.parse(req);
+
+    const orgId = fields.orgId?.[0];
+    const namespace = fields.namespace?.[0]?.trim();
+    const file = files.file?.[0];
+    const filename = file?.originalFilename?.trim();
+
+    tempFilePath = file?.filepath;
+
+    if (!file || !orgId || !namespace || !filename) {
+      return res.status(400).json({ error: "Файл дутуу байна" });
+    }
+
+    if (!isSupportedUpload(filename)) {
+      return res.status(400).json({ error: "Зөвхөн DOCX эсвэл PDF файл оруулна уу" });
+    }
+
+    const documents = await loadUploadDocument(file.filepath, filename);
+    const chunks = await splitUploadDocuments(documents);
+
+    if (!chunks.length) {
+      return res
+        .status(400)
+        .json({ error: "Файлаас ашиглах боломжтой текст олдсонгүй" });
+    }
+
+    const ids = buildUploadChunkIds(filename, chunks.length);
+    await indexUploadDocuments({ documents: chunks, ids, namespace });
+
+    const { error } = await supabaseAdmin.from("documents").insert({
+      org_id: orgId,
+      filename,
+      chunk_count: chunks.length,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return res.status(200).json({ ok: true });
+  } catch (error) {
+    console.error("Upload failed:", error);
+    return res.status(500).json({ error: "Файл боловсруулахад алдаа гарлаа" });
+  } finally {
+    if (tempFilePath) {
+      await fs.unlink(tempFilePath).catch(() => undefined);
+    }
+  }
 }

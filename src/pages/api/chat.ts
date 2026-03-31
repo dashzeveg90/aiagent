@@ -1,34 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import OpenAI from "openai";
-import { Pinecone } from "@pinecone-database/pinecone";
+import {
+  isChatMessagePayload,
+} from "@/lib/rag/messages";
+import { getAuthenticatedChatOrganization } from "@/lib/rag/organization";
+import { streamChatText } from "@/lib/rag/streamChat";
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
-const index = pc.Index(process.env.PINECONE_INDEX!);
-
-async function getEmbedding(text: string): Promise<number[]> {
-  const response = await client.embeddings.create({
-    input: text,
-    model: "text-embedding-3-large",
-  });
-  return response.data[0].embedding;
-}
-
-async function getContext(question: string): Promise<string> {
-  const vector = await getEmbedding(question);
-  const results = await index.query({
-    vector,
-    topK: 4,
-    includeMetadata: true,
-  });
-
-  const parts = results.matches
-    .filter((m) => (m.score ?? 0) > 0.3)
-    .map((m) => m.metadata?.text as string)
-    .filter(Boolean);
-
-  return parts.join("\n\n");
-}
+const MAX_MESSAGE_COUNT = 20;
+const MAX_MESSAGE_LENGTH = 4000;
+const MAX_TOTAL_MESSAGE_LENGTH = 20000;
 
 export default async function handler(
   req: NextApiRequest,
@@ -37,71 +16,73 @@ export default async function handler(
   if (req.method !== "POST") return res.status(405).end();
 
   const { messages } = req.body;
-  if (!messages?.length)
+  if (!Array.isArray(messages) || !messages.length)
     return res.status(400).json({ error: "Асуулт хоосон байна" });
 
-  const lastQuestion = messages[messages.length - 1].content;
+  if (!messages.every(isChatMessagePayload)) {
+    return res.status(400).json({ error: "Мессежийн бүтэц буруу байна" });
+  }
 
-  // Pinecone-с холбогдох мэдээллийг хайна
-  const context = await getContext(lastQuestion);
+  if (messages.length > MAX_MESSAGE_COUNT) {
+    return res.status(400).json({ error: "Хэт олон мессеж илгээлээ" });
+  }
 
-  const systemPrompt = context
-    ? `Та бол компанийн албан ёсны AI туслах.
+  if (
+    messages.some(
+      (message) =>
+        !message.content.trim() || message.content.length > MAX_MESSAGE_LENGTH,
+    )
+  ) {
+    return res.status(400).json({ error: "Мессеж хэт урт эсвэл хоосон байна" });
+  }
 
-ҮҮРЭГ:
-- Хэрэглэгчийн асуултад зөвхөн доорх "МЭДЭЭЛЭЛ" хэсэгт өгөгдсөн мэдээлэлд тулгуурлан хариул.
-- Мэдээлэлд байхгүй зүйлд таамаглах, зохиох, гадаад мэдлэг ашиглахыг ХОРИГЛОНО.
+  const totalMessageLength = messages.reduce(
+    (total, message) => total + message.content.length,
+    0,
+  );
 
-ХЭЛНИЙ ДҮРЭМ:
-- Асуулт монголоор байвал монголоор
-- Асуулт англиар байвал англиар хариул
+  if (totalMessageLength > MAX_TOTAL_MESSAGE_LENGTH) {
+    return res.status(400).json({ error: "Нийт мессежийн хэмжээ хэтэрлээ" });
+  }
 
-ХАРИУЛТЫН ДҮРЭМ:
-- Товч, ойлгомжтой, шууд хариул
-- Хэрэв жагсаалт шаардлагатай бол:
-  1. Ийм байдлаар шинэ мөрнөөс эхэлж бич
-- Илүү тайлбар нэмж уртасгахгүй
+  const lastMessage = messages[messages.length - 1];
 
-ХЯЗГААРЛАЛТ:
-- Хэрэв шаардлагатай мэдээлэл "МЭДЭЭЛЭЛ" хэсэгт байхгүй бол:
-  → "Энэ талаар манай ажилтантай холбогдоно уу" гэж яг тэр хэлбэрээр хариул
+  if (lastMessage.role !== "user") {
+    return res.status(400).json({ error: "Сүүлийн мессеж хэрэглэгчээс байх ёстой" });
+  }
 
-МЭДЭЭЛЭЛ:
-${context}`
-    : `Та бол компанийн албан ёсны AI туслах.
+  const organization = await getAuthenticatedChatOrganization(req, res);
 
-ХЭЛНИЙ ДҮРЭМ:
-- Асуулт монголоор байвал монголоор
-- Асуулт англиар байвал англиар хариул
-
-ХЯЗГААРЛАЛТ:
-- Мэдээлэл олдсонгүй.
-- Ямар ч асуултад:
-  → "Энэ талаар манай ажилтантай холбогдоно уу" гэж хариул
-
-Нэмэлт тайлбар, өөр хариулт өгөхийг хориглоно.`;
+  if (!organization) {
+    return res.status(401).json({ error: "Нэвтэрч орсны дараа чат ашиглана уу" });
+  }
 
   // Streaming тохируулна
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
+  res.flushHeaders?.();
 
-  const stream = await client.chat.completions.create({
-    model: "gpt-5.4",
-    temperature: 0,
-    stream: true,
-    messages: [{ role: "system", content: systemPrompt }, ...messages],
-  });
-
-  for await (const chunk of stream) {
-    const text = chunk.choices[0]?.delta?.content ?? "";
-    if (text) {
-      res.write(`data: ${JSON.stringify({ text })}\n\n`);
-    }
+  try {
+    await streamChatText(
+      messages,
+      (text) => {
+        res.write(`data: ${JSON.stringify({ text })}\n\n`);
+      },
+      {
+        namespace: organization.pinecone_namespace,
+        orgInstruction: organization.system_prompt,
+      },
+    );
+  } catch (error) {
+    console.error("Chat failed:", error);
+    res.write(
+      `data: ${JSON.stringify({ text: "Алдаа гарлаа. Дахин оролдоно уу." })}\n\n`,
+    );
+  } finally {
+    res.write("data: [DONE]\n\n");
+    res.end();
   }
-
-  res.write("data: [DONE]\n\n");
-  res.end();
 }
 
 export const config = {

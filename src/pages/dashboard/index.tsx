@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react";
+import {
+  DEFAULT_ORG_SYSTEM_PROMPT,
+  normalizeOrgSystemPrompt,
+} from "@/lib/rag/prompt";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/router";
 
@@ -34,6 +38,7 @@ export default function Dashboard() {
         .insert({
           name: user.email?.split("@")[0] + "-company",
           owner_id: user.id,
+          system_prompt: DEFAULT_ORG_SYSTEM_PROMPT,
         })
         .select()
         .single();
@@ -45,8 +50,22 @@ export default function Dashboard() {
       orgData = newOrg;
     }
 
+    const normalizedPrompt = normalizeOrgSystemPrompt(orgData.system_prompt);
+
+    if (normalizedPrompt !== orgData.system_prompt) {
+      await supabase
+        .from("organizations")
+        .update({ system_prompt: normalizedPrompt })
+        .eq("id", orgData.id);
+
+      orgData = {
+        ...orgData,
+        system_prompt: normalizedPrompt,
+      };
+    }
+
     setOrg(orgData);
-    setPrompt(orgData.system_prompt);
+    setPrompt(orgData.system_prompt || DEFAULT_ORG_SYSTEM_PROMPT);
 
     const { data: docsData } = await supabase
       .from("documents")
@@ -67,10 +86,13 @@ export default function Dashboard() {
   };
 
   const savePrompt = async () => {
+    const normalizedPrompt = normalizeOrgSystemPrompt(prompt);
+
     await supabase
       .from("organizations")
-      .update({ system_prompt: prompt })
+      .update({ system_prompt: normalizedPrompt })
       .eq("id", org.id);
+    setPrompt(normalizedPrompt);
     alert("Хадгалагдлаа!");
   };
 

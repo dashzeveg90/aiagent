@@ -38,36 +38,73 @@ export default function Chatbot() {
         body: JSON.stringify({ messages: newMessages }),
       });
 
-      const reader = res.body!.getReader();
+      if (!res.ok || !res.body) {
+        let errorMessage = "Алдаа гарлаа. Дахин оролдоно уу.";
+
+        try {
+          const data = await res.json();
+          if (typeof data?.error === "string") {
+            errorMessage = data.error;
+          }
+        } catch {}
+
+        throw new Error(errorMessage);
+      }
+
+      const reader = res.body.getReader();
       const decoder = new TextDecoder();
+      let buffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
-        const lines = decoder.decode(value).split("\n");
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          const data = line.replace("data: ", "").trim();
-          if (data === "[DONE]") break;
-          try {
-            const { text } = JSON.parse(data);
-            setMessages((prev) => {
-              const updated = [...prev];
-              updated[updated.length - 1] = {
-                role: "assistant",
-                content: updated[updated.length - 1].content + text,
-              };
-              return updated;
-            });
-          } catch {}
+        buffer += decoder.decode(value, { stream: !done });
+
+        const events = buffer.split("\n\n");
+        buffer = events.pop() ?? "";
+
+        for (const event of events) {
+          const lines = event.split("\n");
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+
+            const data = line.replace("data: ", "").trim();
+
+            if (data === "[DONE]") {
+              return;
+            }
+
+            try {
+              const { text } = JSON.parse(data);
+              setMessages((prev) => {
+                const updated = [...prev];
+                updated[updated.length - 1] = {
+                  role: "assistant",
+                  content: updated[updated.length - 1].content + text,
+                };
+                return updated;
+              });
+            } catch {}
+          }
+
+          if (done) {
+            break;
+          }
         }
+
+        if (done) break;
       }
-    } catch {
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Алдаа гарлаа. Дахин оролдоно уу.";
+
       setMessages((prev) => {
         const updated = [...prev];
         updated[updated.length - 1] = {
           role: "assistant",
-          content: "Алдаа гарлаа. Дахин оролдоно уу.",
+          content: message,
         };
         return updated;
       });

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { DEFAULT_ORG_SYSTEM_PROMPT } from "@/lib/rag/prompt";
 import { useRouter } from "next/router";
 
 export default function Auth() {
@@ -29,6 +30,7 @@ export default function Auth() {
         await supabase.from("organizations").insert({
           name: email.split("@")[0] + "-company",
           owner_id: data.user!.id,
+          system_prompt: DEFAULT_ORG_SYSTEM_PROMPT,
         });
         router.push("/dashboard");
       }
