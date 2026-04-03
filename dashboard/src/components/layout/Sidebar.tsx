@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useAuth } from "@/lib/auth";
-import { getSubscriptionLabel, hasActiveSubscription } from "@/lib/subscription";
+import {
+  getSubscriptionLabel,
+  hasActiveSubscription,
+} from "@/lib/subscription";
 
 export default function Sidebar() {
   const router = useRouter();
@@ -45,7 +48,9 @@ export default function Sidebar() {
                   {user?.name || "Хэрэглэгч"}
                 </p>
                 <p className="text-xs text-gray-400 truncate">
-                  {user?.role === "superadmin" ? "Superadmin" : user?.company?.name}
+                  {user?.role === "superadmin"
+                    ? "Superadmin"
+                    : user?.company?.name}
                 </p>
                 {user?.role === "company_admin" ? (
                   <p
@@ -66,7 +71,8 @@ export default function Sidebar() {
             {navigation.map((item) => {
               const isActive =
                 router.pathname === item.href ||
-                (item.href !== "/dashboard" && router.pathname.startsWith(item.href));
+                (item.href !== "/dashboard" &&
+                  router.pathname.startsWith(item.href));
 
               return (
                 <Link

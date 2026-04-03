@@ -3,6 +3,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Sidebar from "@/components/layout/Sidebar";
 import apiService from "@/lib/api";
 import { RobotOutlined, UserOutlined, SendOutlined } from "@ant-design/icons";
+import EmbedCode from "@/components/embed/EmbedCode";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface FormData {
@@ -263,7 +264,7 @@ export default function SettingsPage() {
               {message}
             </div>
           )}
-
+          <EmbedCode slug={formData.slug} />
           <form
             onSubmit={handleSubmit}
             className="mt-6 flex flex-col lg:flex-row gap-6"
