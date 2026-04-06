@@ -11,8 +11,6 @@ import {
 interface Props {
   slug: string;
   mode: "floating" | "inline";
-  subtitle: string;
-  greeting: string;
   position?: "right" | "left";
 }
 interface Msg {
@@ -28,12 +26,16 @@ interface Cfg {
   textColor: string;
   subtitle: string;
   greeting: string;
-  subscription: { isActive: boolean; endsAt: string };
+  subscription: { isActive: boolean; endsAt: string | null };
 }
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5005/api";
-const isActive = (c: Cfg) =>
-  c.subscription?.isActive && new Date(c.subscription.endsAt) > new Date();
+const isActive = (c: Cfg) => {
+  if (!c.subscription?.isActive) return false;
+  const end = c.subscription.endsAt;
+  if (!end) return true;
+  return new Date(end) > new Date();
+};
 
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 function Avatar({

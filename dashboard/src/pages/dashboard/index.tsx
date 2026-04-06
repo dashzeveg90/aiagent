@@ -54,8 +54,6 @@ export default function DashboardPage() {
           <WidgetRoot
             slug={String(company.slug || "")}
             mode={"floating"}
-            subtitle={"Онлайн"}
-            greeting={"Сайн байна уу! Та надаас юу асуухыг хүсч байна вэ?"}
             position={"right"}
           />
           {error ? (

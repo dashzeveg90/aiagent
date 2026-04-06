@@ -15,8 +15,6 @@ interface Props {
 interface Config {
   mode: "floating" | "inline";
   position: "right" | "left";
-  subtitle: string;
-  greeting: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -24,8 +22,6 @@ function buildSrc(base: string, slug: string, cfg: Config) {
   const p = new URLSearchParams({
     mode: cfg.mode,
     position: cfg.position,
-    subtitle: cfg.subtitle,
-    greeting: cfg.greeting,
   });
   return `${base}/widget/${slug}?${p}`;
 }
@@ -97,8 +93,6 @@ export default function EmbedCode({ slug, baseUrl }: Props) {
   const [cfg, setCfg] = useState<Config>({
     mode: "floating",
     position: "right",
-    subtitle: "Онлайн",
-    greeting: "Сайн байна уу! Та надаас юу асуухыг хүсч байна вэ?",
   });
   const [showCode, setShowCode] = useState(false);
 
@@ -154,28 +148,9 @@ export default function EmbedCode({ slug, baseUrl }: Props) {
             </select>
           </div>
         )}
-        <div className="flex items-center gap-2 flex-1 min-w-[160px]">
-          <span className="text-xs text-slate-500 whitespace-nowrap">
-            Subtitle
-          </span>
-          <input
-            value={cfg.subtitle}
-            onChange={(e) => patch({ subtitle: e.target.value })}
-            className="flex-1 text-xs rounded-lg border border-slate-200 px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            placeholder="Онлайн"
-          />
-        </div>
-        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-          <span className="text-xs text-slate-500 whitespace-nowrap">
-            Мэндчилгээ
-          </span>
-          <input
-            value={cfg.greeting}
-            onChange={(e) => patch({ greeting: e.target.value })}
-            className="flex-1 text-xs rounded-lg border border-slate-200 px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            placeholder="Сайн байна уу!..."
-          />
-        </div>
+        <p className="text-[11px] text-slate-500">
+          Чатын текст, өнгө нь дээрх «Тохиргоо»-оос хадгалагдана.
+        </p>
       </div>
 
       {/* ── Live iframe preview ── */}

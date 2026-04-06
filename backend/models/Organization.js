@@ -60,6 +60,28 @@ const OrganizationSchema = new mongoose.Schema(
       type: String,
       default: "#2563eb",
     },
+    chatBg: {
+      type: String,
+      default: "#ffffff",
+    },
+    titleColor: {
+      type: String,
+      default: "#ffffff",
+    },
+    textColor: {
+      type: String,
+      default: "#1e293b",
+    },
+    greeting: {
+      type: String,
+      default: "",
+      maxlength: [2000, "Мэндчилгээ хэт урт байна"],
+    },
+    subtitle: {
+      type: String,
+      default: "",
+      maxlength: [200, "Subtitle хэт урт байна"],
+    },
     logoUrl: {
       type: String,
       default: "",
