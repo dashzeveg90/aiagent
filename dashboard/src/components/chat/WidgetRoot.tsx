@@ -420,7 +420,7 @@ export default function WidgetRoot({ slug, mode, position = "right" }: Props) {
             <img
               src={logoUrl}
               alt=""
-              className="w-7 h-7 object-contain rounded"
+              className="w-full h-full object-contain rounded-full"
             />
           ) : (
             <RobotOutlined style={{ fontSize: 22, color: cfg.titleColor }} />

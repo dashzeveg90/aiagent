@@ -115,7 +115,7 @@ export default function KnowledgeBasePage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-slate-100 md:flex">
+      <div className="min-h-screen bg-slate-100 md:flex ml-64">
         <Sidebar />
         <main className="flex-1 p-6 md:p-8">
           <h1 className="text-3xl font-bold text-slate-900">Мэдлэгийн сан</h1>
@@ -150,16 +150,20 @@ export default function KnowledgeBasePage() {
                   onSubmit={handleUpload}
                   className="rounded-2xl border border-slate-200 bg-white p-6"
                 >
-                  <h2 className="text-xl font-semibold text-slate-900">Баримт оруулах</h2>
+                  <h2 className="text-xl font-semibold text-slate-900">
+                    Баримт оруулах
+                  </h2>
                   <p className="mt-2 text-sm text-slate-500">
-                    `.docx` болон `.pdf` файлыг backend API руу илгээж мэдлэгийн санд
-                    боловсруулан хадгална.
+                    `.docx` болон `.pdf` файлыг backend API руу илгээж мэдлэгийн
+                    санд боловсруулан хадгална.
                   </p>
 
                   <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5">
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                       <div>
-                        <p className="text-sm font-medium text-slate-900">Файл сонгох</p>
+                        <p className="text-sm font-medium text-slate-900">
+                          Файл сонгох
+                        </p>
                         <p className="mt-1 text-sm text-slate-500">
                           Дэмжигдэх формат: `.docx`, `.pdf`
                         </p>
@@ -212,7 +216,9 @@ export default function KnowledgeBasePage() {
 
                 <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
                   <div className="border-b border-slate-200 px-5 py-4">
-                    <h2 className="font-semibold text-slate-900">Оруулсан баримтууд</h2>
+                    <h2 className="font-semibold text-slate-900">
+                      Оруулсан баримтууд
+                    </h2>
                   </div>
 
                   {documents.length === 0 ? (
@@ -227,9 +233,12 @@ export default function KnowledgeBasePage() {
                           className="flex flex-col gap-4 px-5 py-4 md:flex-row md:items-center md:justify-between"
                         >
                           <div>
-                            <p className="font-medium text-slate-900">{document.filename}</p>
+                            <p className="font-medium text-slate-900">
+                              {document.filename}
+                            </p>
                             <p className="mt-1 text-sm text-slate-500">
-                              {document.chunkCount || 0} chunk · {formatDate(document.createdAt)}
+                              {document.chunkCount || 0} chunk ·{" "}
+                              {formatDate(document.createdAt)}
                             </p>
                           </div>
                           <button
@@ -238,7 +247,9 @@ export default function KnowledgeBasePage() {
                             disabled={deletingId === document._id}
                             className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-60"
                           >
-                            {deletingId === document._id ? "Устгаж байна..." : "Устгах"}
+                            {deletingId === document._id
+                              ? "Устгаж байна..."
+                              : "Устгах"}
                           </button>
                         </div>
                       ))}
@@ -254,7 +265,8 @@ export default function KnowledgeBasePage() {
                     Company: {company?.name || user?.company?.name || "-"}
                   </p>
                   <p className="mt-2 text-sm text-slate-500">
-                    Public slug: /chat/{company?.slug || user?.company?.slug || ""}
+                    Public slug: /chat/
+                    {company?.slug || user?.company?.slug || ""}
                   </p>
                   <p className="mt-2 text-sm text-slate-500">
                     Нийт баримт: {documents.length}
@@ -264,9 +276,18 @@ export default function KnowledgeBasePage() {
                 <div className="rounded-2xl border border-slate-200 bg-white p-6">
                   <h2 className="font-semibold text-slate-900">Санамж</h2>
                   <div className="mt-4 space-y-3 text-sm text-slate-500">
-                    <p>- Файл оруулсны дараа баримт автоматаар backend дээр боловсруулагдана.</p>
-                    <p>- Chatbot зөвхөн танай company-ийн namespace доторх мэдээллийг ашиглана.</p>
-                    <p>- Шинэ баримт нэмсний дараа public chat дээр шууд шалгаж болно.</p>
+                    <p>
+                      - Файл оруулсны дараа баримт автоматаар backend дээр
+                      боловсруулагдана.
+                    </p>
+                    <p>
+                      - Chatbot зөвхөн танай company-ийн namespace доторх
+                      мэдээллийг ашиглана.
+                    </p>
+                    <p>
+                      - Шинэ баримт нэмсний дараа public chat дээр шууд шалгаж
+                      болно.
+                    </p>
                   </div>
                 </div>
               </div>
