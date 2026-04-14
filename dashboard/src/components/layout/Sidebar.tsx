@@ -25,8 +25,8 @@ export default function Sidebar() {
         ];
 
   return (
-    <div className="hidden md:flex md:flex-shrink-0">
-      <div className="flex flex-col w-64">
+    <div className="hidden md:block fixed inset-y-0 left-0 z-10 w-64">
+      <div className="flex flex-col h-screen bg-gray-950 border-r border-gray-800">
         <div className="flex flex-col h-screen bg-gray-950 border-r border-gray-800">
           <div className="flex items-center h-16 flex-shrink-0 px-4 bg-gray-900">
             <div className="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-lg">

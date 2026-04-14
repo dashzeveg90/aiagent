@@ -217,7 +217,7 @@ export default function BillingPage() {
 
   return (
     <ProtectedRoute allowExpiredSubscription>
-      <div className="min-h-screen bg-slate-100 md:flex">
+      <div className="min-h-screen bg-slate-100 md:flex ml-64">
         <Sidebar />
         <main className="flex-1 p-6 md:p-8">
           <h1 className="text-3xl font-bold text-slate-900">Billing</h1>

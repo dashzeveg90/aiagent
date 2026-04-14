@@ -44,7 +44,7 @@ export default function DashboardPage() {
     <ProtectedRoute>
       <div className="min-h-screen bg-slate-100 md:flex">
         <Sidebar />
-        <main className="flex-1 p-6 md:p-8">
+        <main className="flex-1 ml-64 p-6 md:p-8">
           <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
           <p className="mt-2 text-slate-500">
             {user?.role === "superadmin"

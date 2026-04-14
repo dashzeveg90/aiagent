@@ -246,7 +246,7 @@ export default function SettingsPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-slate-100 md:flex">
+      <div className="min-h-screen ml-64 bg-slate-100 md:flex">
         <Sidebar />
         <main className="flex-1 p-6 md:p-8 max-w-6xl">
           <h1 className="text-2xl font-bold text-slate-900">Тохиргоо</h1>
