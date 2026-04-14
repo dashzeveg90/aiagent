@@ -4,6 +4,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import apiService from "@/lib/api";
 import { RobotOutlined, UserOutlined, SendOutlined } from "@ant-design/icons";
 import EmbedCode from "@/components/embed/EmbedCode";
+import { toast } from "sonner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface FormData {
@@ -187,8 +188,6 @@ export default function SettingsPage() {
     greeting: "",
     subtitle: "",
   });
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   const set = (k: Partial<FormData>) => setFormData((p) => ({ ...p, ...k }));
@@ -212,19 +211,19 @@ export default function SettingsPage() {
           subtitle: c.subtitle || "",
         });
       })
-      .catch((e) => setError(e instanceof Error ? e.message : "Алдаа гарлаа"));
+      .catch((e) =>
+        toast.error(e instanceof Error ? e.message : "Алдаа гарлаа"),
+      );
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setError("");
-    setMessage("");
     try {
       await apiService.company.updateCurrent(formData);
-      setMessage("Тохиргоо хадгалагдлаа");
+      toast.success("Тохиргоо хадгалагдлаа");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Алдаа гарлаа");
+      toast.error(err instanceof Error ? err.message : "Алдаа гарлаа");
     } finally {
       setSaving(false);
     }
@@ -253,17 +252,6 @@ export default function SettingsPage() {
           <p className="mt-1 text-sm text-slate-500">
             Компаний мэдээлэл болон чатны дизайн тохируулах.
           </p>
-
-          {error && (
-            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
-          {message && (
-            <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              {message}
-            </div>
-          )}
           <EmbedCode slug={formData.slug} />
           <form
             onSubmit={handleSubmit}

@@ -4,6 +4,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Sidebar from "@/components/layout/Sidebar";
 import { useAuth } from "@/lib/auth";
 import apiService from "@/lib/api";
+import { toast } from "sonner";
 
 function formatDate(value: unknown) {
   if (!value) {
@@ -35,7 +36,6 @@ export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Array<Record<string, unknown>>>(
     [],
   );
-  const [error, setError] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -43,7 +43,7 @@ export default function CompaniesPage() {
         const response = await apiService.companies.getAll();
         setCompanies(response.data);
       } catch (loadError) {
-        setError(
+        toast.error(
           loadError instanceof Error ? loadError.message : "Алдаа гарлаа",
         );
       }
@@ -63,12 +63,6 @@ export default function CompaniesPage() {
           <p className="mt-2 text-slate-500">
             Зөвхөн superadmin энэ хэсгийг харна.
           </p>
-
-          {error ? (
-            <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          ) : null}
 
           <div className="mt-8 rounded-2xl border border-slate-200 bg-white overflow-hidden">
             <div className="hidden md:grid grid-cols-[1.4fr_1fr_1fr_1fr_180px] gap-4 border-b border-slate-200 px-5 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">

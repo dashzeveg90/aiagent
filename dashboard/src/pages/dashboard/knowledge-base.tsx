@@ -3,6 +3,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Sidebar from "@/components/layout/Sidebar";
 import { useAuth } from "@/lib/auth";
 import apiService from "@/lib/api";
+import { toast } from "sonner";
 
 type Company = {
   name?: string;
@@ -42,8 +43,6 @@ export default function KnowledgeBasePage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
 
   const loadData = useCallback(async () => {
     try {
@@ -51,7 +50,7 @@ export default function KnowledgeBasePage() {
       setCompany(response.data.company || null);
       setDocuments(response.data.documents || []);
     } catch (loadError) {
-      setError(getErrorMessage(loadError));
+      toast.error(getErrorMessage(loadError));
     } finally {
       setLoading(false);
     }
@@ -72,17 +71,15 @@ export default function KnowledgeBasePage() {
     event.preventDefault();
 
     if (!selectedFile) {
-      setError("Оруулах файлаа сонгоно уу");
+      toast.error("Оруулах файлаа сонгоно уу");
       return;
     }
 
     setUploading(true);
-    setError("");
-    setMessage("");
 
     try {
       await apiService.company.uploadDocument(selectedFile);
-      setMessage("Баримт амжилттай оруулагдлаа");
+      toast.success("Баримт амжилттай оруулагдлаа");
       setSelectedFile(null);
 
       if (fileInputRef.current) {
@@ -91,7 +88,7 @@ export default function KnowledgeBasePage() {
 
       await loadData();
     } catch (uploadError) {
-      setError(getErrorMessage(uploadError));
+      toast.error(getErrorMessage(uploadError));
     } finally {
       setUploading(false);
     }
@@ -99,15 +96,13 @@ export default function KnowledgeBasePage() {
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
-    setError("");
-    setMessage("");
 
     try {
       await apiService.company.deleteDocument(id);
-      setMessage("Баримт устгагдлаа");
+      toast.success("Баримт устгагдлаа");
       await loadData();
     } catch (deleteError) {
-      setError(getErrorMessage(deleteError));
+      toast.error(getErrorMessage(deleteError));
     } finally {
       setDeletingId(null);
     }
@@ -122,18 +117,6 @@ export default function KnowledgeBasePage() {
           <p className="mt-2 text-slate-500">
             Компанийн баримт бичгийг оруулж chatbot-ийн мэдлэгийн санд нэмнэ.
           </p>
-
-          {error ? (
-            <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          ) : null}
-
-          {message ? (
-            <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              {message}
-            </div>
-          ) : null}
 
           {user?.role === "superadmin" ? (
             <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">

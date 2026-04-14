@@ -3,6 +3,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Sidebar from "@/components/layout/Sidebar";
 import { useAuth } from "@/lib/auth";
 import apiService from "@/lib/api";
+import { toast } from "sonner";
 
 type PackageItem = {
   _id: string;
@@ -33,8 +34,6 @@ export default function PackagesPage() {
   const [packages, setPackages] = useState<PackageItem[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [formData, setFormData] = useState(emptyForm);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
 
   const selectedPackage = useMemo(
@@ -52,7 +51,7 @@ export default function PackagesPage() {
         setSelectedId(items[0]._id);
       }
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Алдаа гарлаа");
+      toast.error(loadError instanceof Error ? loadError.message : "Алдаа гарлаа");
     }
   }, [selectedId]);
 
@@ -81,8 +80,6 @@ export default function PackagesPage() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setSaving(true);
-    setError("");
-    setMessage("");
 
     const payload = {
       name: formData.name,
@@ -102,10 +99,10 @@ export default function PackagesPage() {
     try {
       if (selectedPackage) {
         await apiService.packages.update(selectedPackage._id, payload);
-        setMessage("Багц шинэчлэгдлээ");
+        toast.success("Багц шинэчлэгдлээ");
       } else {
         await apiService.packages.create(payload);
-        setMessage("Шинэ багц үүслээ");
+        toast.success("Шинэ багц үүслээ");
       }
 
       await loadPackages();
@@ -113,7 +110,7 @@ export default function PackagesPage() {
         setFormData(emptyForm);
       }
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Алдаа гарлаа");
+      toast.error(saveError instanceof Error ? saveError.message : "Алдаа гарлаа");
     } finally {
       setSaving(false);
     }
@@ -135,18 +132,6 @@ export default function PackagesPage() {
             </div>
           ) : null}
 
-          {error ? (
-            <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          ) : null}
-
-          {message ? (
-            <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              {message}
-            </div>
-          ) : null}
-
           <div className="mt-8 grid gap-6 lg:grid-cols-[340px_1fr]">
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
               <div className="flex items-center justify-between">
@@ -156,8 +141,6 @@ export default function PackagesPage() {
                   onClick={() => {
                     setSelectedId("");
                     setFormData(emptyForm);
-                    setMessage("");
-                    setError("");
                   }}
                   className="text-sm font-medium text-blue-600"
                 >

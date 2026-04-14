@@ -3,19 +3,18 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useAuth } from "@/lib/auth";
 import { hasActiveSubscription } from "@/lib/subscription";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
-    setError("");
 
     try {
       const user = await login(email, password);
@@ -25,7 +24,7 @@ export default function LoginPage() {
           : "/dashboard/billing",
       );
     } catch (submissionError) {
-      setError(
+      toast.error(
         submissionError instanceof Error
           ? submissionError.message
           : "Нэвтрэхэд алдаа гарлаа",
@@ -47,12 +46,6 @@ export default function LoginPage() {
             Superadmin болон company admin эрхээр нэвтэрнэ.
           </p>
         </div>
-
-        {error ? (
-          <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </div>
-        ) : null}
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <input

@@ -10,6 +10,7 @@ import {
   getSubscriptionLabel,
   hasActiveSubscription,
 } from "@/lib/subscription";
+import { toast } from "sonner";
 
 type BillingPackage = {
   _id: string;
@@ -75,8 +76,6 @@ export default function BillingPage() {
   const [selectedPackageId, setSelectedPackageId] = useState("");
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const [configHint, setConfigHint] = useState<string[]>([]);
 
   const selectedPackage = useMemo(
@@ -104,7 +103,7 @@ export default function BillingPage() {
           setSelectedPackageId(defaultPackageId);
         }
       } catch (loadError) {
-        setError(
+        toast.error(
           loadError instanceof Error ? loadError.message : "Алдаа гарлаа",
         );
       } finally {
@@ -141,17 +140,15 @@ export default function BillingPage() {
 
   const createInvoice = async () => {
     if (!selectedPackageId) {
-      setError("Багцаа сонгоно уу");
+      toast.error("Багцаа сонгоно уу");
       return;
     }
 
     setPaying(true);
-    setError("");
-    setMessage("");
 
     try {
       await apiService.billing.createInvoice(selectedPackageId);
-      setMessage("QPay нэхэмжлэл үүслээ. QR кодоор төлбөрөө хийнэ үү.");
+      toast.success("QPay нэхэмжлэл үүслээ. QR кодоор төлбөрөө хийнэ үү.");
       await loadBilling(false);
     } catch (invoiceError) {
       if (invoiceError instanceof ApiError) {
@@ -162,7 +159,7 @@ export default function BillingPage() {
           setConfigHint(qpayConfig.missing);
         }
       }
-      setError(
+      toast.error(
         invoiceError instanceof Error ? invoiceError.message : "Алдаа гарлаа",
       );
     } finally {
@@ -174,9 +171,6 @@ export default function BillingPage() {
     if (!payload?.activeTransaction?._id) {
       return;
     }
-
-    setError("");
-    setMessage("");
 
     try {
       const response = await apiService.billing.getTransaction(
@@ -196,10 +190,10 @@ export default function BillingPage() {
 
       if (transaction.status === "paid") {
         await refreshUser();
-        setMessage("Төлбөр амжилттай баталгаажлаа.");
+        toast.success("Төлбөр амжилттай баталгаажлаа.");
       }
     } catch (refreshError) {
-      setError(
+      toast.error(
         refreshError instanceof Error ? refreshError.message : "Алдаа гарлаа",
       );
     }
@@ -229,18 +223,6 @@ export default function BillingPage() {
             <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
               Subscription идэвхгүй байна. Dashboard-ийн бусад хэсэг нээгдэхийн
               тулд төлбөрөө баталгаажуулна уу.
-            </div>
-          ) : null}
-
-          {error ? (
-            <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          ) : null}
-
-          {message ? (
-            <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              {message}
             </div>
           ) : null}
 

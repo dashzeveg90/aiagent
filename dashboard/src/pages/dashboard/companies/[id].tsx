@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Sidebar from "@/components/layout/Sidebar";
 import apiService from "@/lib/api";
+import { toast } from "sonner";
 
 function formatDate(value: unknown) {
   if (!value) {
@@ -34,7 +35,6 @@ export default function CompanyDetailPage() {
   const router = useRouter();
   const { id } = router.query;
   const [payload, setPayload] = useState<Record<string, unknown> | null>(null);
-  const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   const load = async (companyId: string) => {
@@ -42,7 +42,7 @@ export default function CompanyDetailPage() {
       const response = await apiService.companies.getById(companyId);
       setPayload(response.data);
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Алдаа гарлаа");
+      toast.error(loadError instanceof Error ? loadError.message : "Алдаа гарлаа");
     }
   };
 
@@ -58,13 +58,15 @@ export default function CompanyDetailPage() {
     }
 
     setSaving(true);
-    setError("");
 
     try {
       await apiService.companies.updateStatus(id, status);
       await load(id);
+      toast.success("Статус шинэчлэгдлээ");
     } catch (updateError) {
-      setError(updateError instanceof Error ? updateError.message : "Алдаа гарлаа");
+      toast.error(
+        updateError instanceof Error ? updateError.message : "Алдаа гарлаа",
+      );
     } finally {
       setSaving(false);
     }
@@ -83,12 +85,6 @@ export default function CompanyDetailPage() {
         <Sidebar />
         <main className="flex-1 p-6 md:p-8">
           <h1 className="text-3xl font-bold text-slate-900">Company detail</h1>
-
-          {error ? (
-            <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          ) : null}
 
           <div className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_360px]">
             <div className="rounded-2xl border border-slate-200 bg-white p-6">

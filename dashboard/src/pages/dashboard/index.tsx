@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import apiService from "@/lib/api";
 import FloatingChat from "@/components/chat/FloatingChat";
 import WidgetRoot from "@/components/chat/WidgetRoot";
+import { toast } from "sonner";
 
 type DashboardPayload = {
   stats: Record<string, number>;
@@ -18,7 +19,6 @@ type DashboardPayload = {
 export default function DashboardPage() {
   const { user } = useAuth();
   const [payload, setPayload] = useState<DashboardPayload | null>(null);
-  const [error, setError] = useState("");
   const company = (payload?.company || {}) as Record<string, unknown>;
   const currentPackage = (company.currentPackage || {}) as Record<
     string,
@@ -31,7 +31,7 @@ export default function DashboardPage() {
         const response = await apiService.dashboard.getHome();
         setPayload(response.data);
       } catch (loadError) {
-        setError(
+        toast.error(
           loadError instanceof Error ? loadError.message : "Алдаа гарлаа",
         );
       }
@@ -56,11 +56,6 @@ export default function DashboardPage() {
             mode={"floating"}
             position={"right"}
           />
-          {error ? (
-            <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          ) : null}
 
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             {Object.entries(payload?.stats || {}).map(([key, value]) => (
