@@ -10,6 +10,7 @@ interface FormData {
   name: string;
   slug: string;
   brandColor: string;
+  chatColor: string;
   chatBg: string;
   titleColor: string;
   textColor: string;
@@ -58,10 +59,7 @@ function ColorField({
 // ─── Live preview ─────────────────────────────────────────────────────────────
 function Preview({ f }: { f: FormData }) {
   const bubbleUser = { background: f.brandColor, color: f.textColor };
-  const bubbleBot = {
-    background: f.chatBg === "#ffffff" ? "#f1f5f9" : "#1e1e2e",
-    color: f.textColor,
-  };
+  const bubbleBot = { background: f.chatColor, color: f.textColor };
 
   return (
     <div
@@ -180,6 +178,7 @@ export default function SettingsPage() {
     name: "",
     slug: "",
     brandColor: "#2563eb",
+    chatColor: "#f1f5f9",
     chatBg: "#ffffff",
     titleColor: "#ffffff",
     textColor: "#1e293b",
@@ -203,6 +202,7 @@ export default function SettingsPage() {
           name: c.name || "",
           slug: c.slug || "",
           brandColor: c.brandColor || "#2563eb",
+          chatColor: c.chatColor || "#f1f5f9",
           chatBg: c.chatBg || "#ffffff",
           titleColor: c.titleColor || "#ffffff",
           textColor: c.textColor || "#1e293b",
@@ -299,6 +299,11 @@ export default function SettingsPage() {
                   label="Brand / гол өнгө"
                   value={formData.brandColor}
                   onChange={(v) => set({ brandColor: v })}
+                />
+                <ColorField
+                  label="Bot bubble өнгө"
+                  value={formData.chatColor}
+                  onChange={(v) => set({ chatColor: v })}
                 />
                 <ColorField
                   label="Header текст өнгө"

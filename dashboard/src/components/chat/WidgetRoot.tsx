@@ -22,6 +22,7 @@ interface Cfg {
   brandColor: string;
   logoUrl: string;
   chatBg: string;
+  chatColor?: string;
   titleColor: string;
   textColor: string;
   subtitle: string;
@@ -204,8 +205,9 @@ function Chat({ slug, cfg }: { slug: string; cfg: Cfg }) {
   const can = !busy && !!input.trim();
   const logo = cfg.logoUrl || undefined;
 
-  // Bot bubble background — слегка затемнённый вариант chatBg
-  const botBg = `color-mix(in srgb, ${cfg.chatBg} 85%, #000)`;
+  // Bot bubble background: configured color, fallback to darkened chatBg
+  const botBg =
+    cfg.chatColor?.trim() || `color-mix(in srgb, ${cfg.chatBg} 85%, #000)`;
 
   return (
     <div

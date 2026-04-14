@@ -60,6 +60,10 @@ const OrganizationSchema = new mongoose.Schema(
       type: String,
       default: "#2563eb",
     },
+    chatColor: {
+      type: String,
+      default: "#2563eb",
+    },
     chatBg: {
       type: String,
       default: "#ffffff",
