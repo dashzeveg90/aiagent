@@ -59,8 +59,10 @@ function ColorField({
 
 // ─── Live preview ─────────────────────────────────────────────────────────────
 function Preview({ f }: { f: FormData }) {
-  const bubbleUser = { background: f.brandColor, color: f.textColor };
-  const bubbleBot = { background: f.chatColor, color: f.textColor };
+  const botBg =
+    f.chatColor?.trim() && f.chatColor !== "#f1f5f9"
+      ? f.chatColor
+      : `color-mix(in srgb, ${f.chatBg} 85%, #000)`;
 
   return (
     <div
@@ -69,10 +71,10 @@ function Preview({ f }: { f: FormData }) {
     >
       {/* header */}
       <div
-        className="flex items-center gap-2.5 px-3.5 py-3"
+        className="flex items-center gap-2.5 px-3.5 py-3 border-b border-black/10"
         style={{ background: f.brandColor }}
       >
-        <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0 overflow-hidden">
+        <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0 overflow-hidden">
           {f.logoUrl ? (
             <img
               src={f.logoUrl}
@@ -80,7 +82,7 @@ function Preview({ f }: { f: FormData }) {
               className="w-full h-full object-contain"
             />
           ) : (
-            <RobotOutlined className="text-white text-base" />
+            <RobotOutlined style={{ fontSize: 16, color: "white" }} />
           )}
         </div>
         <div className="flex-1 min-w-0">
@@ -90,84 +92,106 @@ function Preview({ f }: { f: FormData }) {
           >
             {f.name || "Company нэр"}
           </p>
-          <p
-            className="text-[10px] mt-1 opacity-80"
-            style={{ color: f.titleColor }}
-          >
-            {f.subtitle || "Онлайн"}
-          </p>
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-300 shrink-0" />
+            <p
+              className="text-[11px] opacity-80"
+              style={{ color: f.titleColor }}
+            >
+              {f.subtitle || "Онлайн"}
+            </p>
+          </div>
         </div>
       </div>
+
       {/* messages */}
       <div
         className="px-3 py-3 space-y-2.5 min-h-[140px]"
         style={{ background: f.chatBg }}
       >
         {f.greeting && (
-          <div className="flex items-end gap-1.5">
-            <div className="w-5 h-5 rounded-full bg-white/80 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+          <div className="flex items-end gap-2">
+            <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 overflow-hidden bg-white/20">
               {f.logoUrl ? (
                 <img src={f.logoUrl} className="w-full h-full object-contain" />
               ) : (
-                <RobotOutlined style={{ fontSize: 10, color: "#94a3b8" }} />
+                <RobotOutlined style={{ fontSize: 11, color: "white" }} />
               )}
             </div>
             <div
-              className="text-xs px-2.5 py-1.5 rounded-2xl rounded-bl-sm max-w-[80%]"
-              style={{
-                ...bubbleBot,
-                background: "rgba(0,0,0,0.06)",
-                color: f.textColor,
-              }}
+              className="text-[13px] leading-relaxed px-3 py-2 rounded-2xl rounded-bl-sm max-w-[82%]"
+              style={{ background: botBg, color: f.textColor }}
             >
               {f.greeting}
             </div>
           </div>
         )}
-        <div className="flex justify-end items-end gap-1.5">
+
+        {/* user bubble */}
+        <div className="flex justify-end items-end gap-2">
           <div
-            className="text-xs px-2.5 py-1.5 rounded-2xl rounded-br-sm max-w-[80%]"
-            style={bubbleUser}
+            className="text-[13px] leading-relaxed px-3 py-2 rounded-2xl rounded-br-sm max-w-[82%]"
+            style={{ background: f.brandColor, color: f.titleColor }}
           >
             Сайн байна уу?
           </div>
-          <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
-            <UserOutlined style={{ fontSize: 10, color: "#94a3b8" }} />
+          <div
+            className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
+            style={{ background: botBg }}
+          >
+            <UserOutlined style={{ fontSize: 11, color: f.textColor }} />
           </div>
         </div>
-        <div className="flex items-end gap-1.5">
+
+        {/* bot bubble */}
+        <div className="flex items-end gap-2">
           <div
-            className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
-            style={{ background: f.brandColor }}
+            className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
+            style={{ background: botBg }}
           >
             {f.logoUrl ? (
               <img src={f.logoUrl} className="w-full h-full object-contain" />
             ) : (
-              <RobotOutlined style={{ fontSize: 10, color: "white" }} />
+              <RobotOutlined style={{ fontSize: 11, color: "white" }} />
             )}
           </div>
           <div
-            className="text-xs px-2.5 py-1.5 rounded-2xl rounded-bl-sm max-w-[80%]"
-            style={{ background: "rgba(0,0,0,0.06)", color: f.textColor }}
+            className="text-[13px] leading-relaxed px-3 py-2 rounded-2xl rounded-bl-sm max-w-[82%]"
+            style={{ background: botBg, color: f.textColor }}
           >
             Тийм, танд хэрхэн туслах вэ?
           </div>
         </div>
       </div>
-      {/* input */}
+
+      {/* input — widget-root-тай яг ижил */}
       <div
-        className="px-3 py-2.5 border-t border-slate-100 flex items-center gap-2"
+        className="shrink-0 px-3 pb-3 pt-2 border-t border-black/5"
         style={{ background: f.chatBg }}
       >
-        <div className="flex-1 text-xs text-slate-400 bg-slate-100 rounded-xl px-3 py-2">
-          Асуулт бичнэ үү…
-        </div>
         <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center"
-          style={{ background: f.brandColor }}
+          className="flex items-end gap-2 rounded-xl px-3 py-2 border"
+          style={{ background: botBg, borderColor: "rgba(0,0,0,0.08)" }}
         >
-          <SendOutlined style={{ fontSize: 11, color: f.titleColor }} />
+          <div
+            className="flex-1 text-[13px] leading-relaxed opacity-40"
+            style={{ color: f.textColor }}
+          >
+            Асуулт бичнэ үү…
+          </div>
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 opacity-40"
+            style={{ background: f.brandColor }}
+          >
+            <SendOutlined style={{ fontSize: 12, color: f.titleColor }} />
+          </div>
         </div>
+        <p
+          className="text-center text-[10px] mt-1.5 opacity-30"
+          style={{ color: f.textColor }}
+        >
+          Enter → илгээх · Shift+Enter → мөр
+        </p>
       </div>
     </div>
   );

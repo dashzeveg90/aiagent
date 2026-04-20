@@ -153,7 +153,9 @@ function Chat({ slug, cfg }: { slug: string; cfg: Cfg }) {
     setMsgs((p) => [...p, user, asst]);
     setInput("");
     setBusy(true);
-    if (taRef.current) taRef.current.style.height = "auto";
+    if (taRef.current) {
+      taRef.current.style.height = "auto"; //
+    }
     try {
       const res = await fetch(`${BASE}/chat/${slug}`, {
         method: "POST",
@@ -300,7 +302,8 @@ function Chat({ slug, cfg }: { slug: string; cfg: Cfg }) {
             }}
             onKeyDown={onKey}
             disabled={busy}
-            placeholder="Асуулт бичнэ үү…"
+            spellCheck={true}
+            placeholder="Асуултаа бичнэ үү…"
             className="flex-1 bg-transparent border-none outline-none text-[13px] leading-relaxed resize-none font-[inherit] max-h-[108px] min-h-5"
             style={{ color: cfg.textColor }}
           />
