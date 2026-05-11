@@ -17,6 +17,15 @@ interface Props {
   slug: string;
 }
 
+function formatContent(text: string) {
+  return text.split("\n").map((line, i, arr) => (
+    <span key={i}>
+      {line}
+      {i < arr.length - 1 && <br />}
+    </span>
+  ));
+}
+
 function TypingDots() {
   return (
     <div className="flex items-center gap-1.5 py-0.5">
@@ -194,7 +203,7 @@ export default function ChatSection({ slug }: Props) {
                 {msg.content.length === 0 && isLoading && isLast ? (
                   <TypingDots />
                 ) : (
-                  msg.content
+                  formatContent(msg.content)
                 )}
                 {isLoading && isLast && msg.content.length > 0 && (
                   <span className="inline-block w-0.5 h-3.5 bg-violet-400 ml-0.5 align-middle animate-pulse" />
